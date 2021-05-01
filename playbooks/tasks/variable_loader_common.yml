@@ -4,7 +4,7 @@
     - name: Loading variables from OS common
       include_vars: "{{ item }}"
       with_items:
-        - "{{ ansible_distribution }}.yml"
+        - "{{ ansible_facts['os_family'] }}.yml"
     
     - name: Create overrides if we're an IPA replica
       include_vars: "{{ item }}"
