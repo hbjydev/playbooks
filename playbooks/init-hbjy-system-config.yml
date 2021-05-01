@@ -23,9 +23,6 @@
     - name: Loading variables from OS common...
       import_tasks: tasks/variable_loader_common.yml
 
-    - name: Configure hostname
-      import_tasks: tasks/hostname.yml
-
     - name: Configure SSH
       import_tasks: tasks/ssh_config.yml
 
