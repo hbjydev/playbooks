@@ -41,6 +41,5 @@ iparoles:
       - "Group Administrators"
       - "Stage User Administrators"
       - "User Administrators"
-      - "FAS Agreement Administrators"
     user:
       - userman
