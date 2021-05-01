@@ -13,7 +13,7 @@
   block:
     - name: SSH daemon configuration - base
       template:
-        src: "etc/ssh/{{ ansible_distribution }}-{{ ansible_distribution_major_version }}-sshd_config.j2"
+        src: "etc/ssh/{{ ansible_facts['os_family'] }}-{{ ansible_distribution_major_version }}-sshd_config.j2"
         dest: "/etc/ssh/sshd_config"
         owner: root
         group: root
