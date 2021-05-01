@@ -14,3 +14,10 @@ ipagroups:
       - userman
       - hostman
       - kerbman
+  - group: tower_administrators
+    description: Ansible Tower administrators
+    user:
+      - hayden
+  - group: tower_users
+    description: Ansible Tower users
+    user: []
