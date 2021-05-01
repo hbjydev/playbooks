@@ -20,4 +20,5 @@ ipagroups:
       - hayden
   - group: tower_users
     description: Ansible Tower users
-    user: []
+    user:
+      - hayden
