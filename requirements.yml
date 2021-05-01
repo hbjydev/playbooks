@@ -1,2 +1,5 @@
 ---
-roles: []
+roles:
+  - name: rockylinux.ipagetcert
+    src: https://github.com/rocky-linux/ansible-role-ipa-getcert
+    version: main
