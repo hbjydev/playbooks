@@ -1,0 +1,197 @@
+---
+- name: sysctl hardening and limits
+  block:
+    - name: create combined sysctl-dict if overwrites are defined
+      set_fact:
+        sysctl_config: '{{ sysctl_config | combine(sysctl_overwrite) }}'
+      when: sysctl_overwrite | default()
+
+    - name: Kernel parameters
+      sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        ignoreerrors: true
+        sysctl_set: true
+        sysctl_file: /etc/sysctl.d/99-ansible.conf
+      with_dict: "{{ sysctl_config }}"
+
+    - name: Security limits
+      pam_limits:
+        dest: "/etc/security/limits.d/cis.conf"
+        domain: "{{ item.domain }}"
+        limit_type: "{{ item.limit_type }}"
+        limit_item: "{{ item.limit_item }}"
+        value: "{{ item.value }}"
+      with_items: "{{ limits }}"
+
+- name: Standard login settings
+  block:
+    - name: useradd defaults
+      lineinfile:
+        line: "INACTIVE=30"
+        regexp: "^INACTIVE=.*"
+        path: "/etc/login.defs"
+    - name: login defs maximum days
+      replace:
+        path: /etc/login.defs
+        regexp: '(PASS_MAX_DAYS).*\d+'
+        replace: '\1\t{{ login_max_days }}'
+      tags:
+        - harden
+
+    - name: login defs minimum days
+      replace:
+        path: /etc/login.defs
+        regexp: '(PASS_MIN_DAYS).*\d+'
+        replace: '\1\t{{ login_min_days }}'
+      tags:
+        - harden
+
+    - name: login defs minimum length
+      replace:
+        path: /etc/login.defs
+        regexp: '(PASS_MIN_LEN).*\d+'
+        replace: '\1\t{{ login_min_len }}'
+      tags:
+        - harden
+
+    - name: login defs warn age
+      replace:
+        path: /etc/login.defs
+        regexp: '(PASS_WARN_AGE).*\d+'
+        replace: '\1\t{{ login_warn_age }}'
+      tags:
+        - harden
+
+    - name: cron directories permissions
+      file:
+        path: '{{ item }}'
+        owner: root
+        group: root
+        mode: '0700'
+        state: directory
+      loop: '{{ login_cron_directories }}'
+      tags:
+        - harden
+
+    - name: Create cron/at allows
+      file:
+        path: '{{ item }}'
+        owner: root
+        group: root
+        mode: '0600'
+        state: touch
+      loop: '{{ login_cron_allows }}'
+      tags:
+        - harden
+
+    - name: Remove cron/at denies
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop: '{{ login_cron_denies }}'
+      tags:
+        - harden
+
+    # TODO: Use pamd module to establish password policy
+    - name: pwquality - minlen
+      lineinfile:
+        line: "minlen = 14"
+        regexp: "^# minlen =.*"
+        path: "/etc/security/pwquality.conf"
+      tags:
+        - harden
+
+    - name: pwquality - dcredit
+      lineinfile:
+        line: "dcredit = -1"
+        regexp: "^# dcredit =.*"
+        path: "/etc/security/pwquality.conf"
+      tags:
+        - harden
+
+    - name: pwquality - ucredit
+      lineinfile:
+        line: "ucredit = -1"
+        regexp: "^# ucredit =.*"
+        path: "/etc/security/pwquality.conf"
+      tags:
+        - harden
+
+    - name: pwquality - lcredit
+      lineinfile:
+        line: "lcredit = -1"
+        regexp: "^# lcredit =.*"
+        path: "/etc/security/pwquality.conf"
+      tags:
+        - harden
+
+    - name: pwquality - ocredit
+      lineinfile:
+        line: "ocredit = -1"
+        regexp: "^# ocredit =.*"
+        path: "/etc/security/pwquality.conf"
+      tags:
+        - harden
+
+    - name: Remove packages not allowed by CIS
+      package:
+        name: "{{ remove_packages }}"
+        state: absent
+      tags:
+        - harden
+
+    - name: Disable Services
+      service:
+        name: "{{ item }}"
+        enabled: false
+        state: stopped
+      loop: "{{ disable_svc }}"
+      register: service_check
+      failed_when: service_check is failed and not 'Could not find the requested service' in service_check.msg
+      tags:
+        - services
+        - harden
+
+    - name: modprobe settings
+      block:
+        - name: remove vfat from filesystem list if we are EFI
+          set_fact:
+            modprobe_unused_filesystems: "{{ modprobe_unused_filesystems | difference('vfat') }}"
+          when:
+            - efi_installed.stat.isdir is defined
+            - efi_installed.stat.isdir
+          tags:
+            - efi
+
+        - name: disable unused filesystems
+          template:
+            src: "etc/modprobe.d/cis.conf.j2"
+            dest: "/etc/modprobe.d/cis.conf"
+            owner: 'root'
+            group: 'root'
+            mode: '0644'
+          tags:
+            - harden
+
+    - name: Set init umask
+      lineinfile:
+        dest: /etc/sysconfig/init
+        state: present
+        regexp: ^umask
+        line: "umask 027"
+        create: true
+        owner: root
+        group: root
+        mode: '0644'
+      when: ansible_distribution_major_version == '7'
+      tags:
+        - harden
+
+    - name: Remove packages not allowed by CIS
+      package:
+        name: "{{ remove_packages }}"
+        state: absent
+      tags:
+        - harden

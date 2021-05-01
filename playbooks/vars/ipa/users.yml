@@ -1,0 +1,9 @@
+---
+users:
+  - name: hayden
+    first: hayden
+    last: Young
+    email: hi@hbjy.dev
+    password: ThisIsNotMyPassword1!
+    title: System Administrator
+    loginshell: /bin/bash

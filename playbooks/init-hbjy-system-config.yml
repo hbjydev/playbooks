@@ -1,0 +1,42 @@
+---
+- name: System configuration script 
+  hosts: "{{ host }}"
+  become: true
+
+  handlers:
+    - import_tasks: handlers/main.yml
+
+  pre_tasks:
+    - name: Check if Ansible can be run here
+      stat:
+        path: /etc/no-ansible
+      register: no_ansible
+
+    - name: Verify Ansible can be run here
+      assert:
+        that:
+          - "not no_ansible.stat.exists"
+        success_msg: 'We are able to run on this node'
+        fail_msg: '/etc/no-ansible exists - skipping run on this node'
+  
+  tasks:
+    - name: Loading variables from OS common...
+      import_tasks: tasks/variable_loader_common.yml
+
+    - name: Configure hostname
+      import_tasks: tasks/hostname.yml
+
+    - name: Configure SSH
+      import_tasks: tasks/ssh_config.yml
+
+    - name: Configure hardened settings
+      import_tasks: tasks/harden.yml
+
+  post_tasks:
+    - name: Touching run file that ansible has ran here
+      file:
+        path: /var/log/ansible.run
+        state: touch
+        mode: '0644'
+        owner: root
+        group: root

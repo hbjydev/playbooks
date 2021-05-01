@@ -1,0 +1,20 @@
+---
+svcusers:
+  - name: hostman
+    first: Host
+    last: Manager
+    password: ThisIsNotMyPassword1!
+    title: System Account - Host Manager
+    loginshell: /sbin/nologin
+  - name: kerbman
+    first: Kerberos
+    last: Manager
+    password: ThisIsNotMyPassword1!
+    title: System Account - Kerberos Key Manager
+    loginshell: /sbin/nologin
+  - name: userman
+    first: User
+    last: Manager
+    password: ThisIsNotMyPassword1!
+    title: System Account - User Manager
+    loginshell: /sbin/nologin

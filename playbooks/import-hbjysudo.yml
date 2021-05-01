@@ -1,0 +1,10 @@
+---
+- name: Create SUDO rule for HBJY Admins
+  freeipa.ansible_freeipa.ipasudorule:
+    ipaadmin_password: "{{ ipaadmin_password }}"
+    name: All_HBJYAdmins
+    description: HBJY operational administrator sudo access
+    group:
+      - hbjyadm
+    hostcat: all
+    cmdcat: all

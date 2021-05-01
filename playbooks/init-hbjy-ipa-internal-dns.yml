@@ -1,0 +1,31 @@
+---
+- name: Configure internal DNS
+  hosts: ipaserver
+  become: false
+  gather_facts: false
+  vars_files:
+    - vars/vaults/encpass.yml
+    - vars/ipa/rdns.yml
+    - vars/ipa/fdns.yml
+
+  tasks:
+    - name: "Checking for user variables"
+      assert:
+        that:
+          - ipaadmin_password | mandatory
+        success_msg: "Required variables provided"
+        fail_msg: "We are missing ipa admin password"
+
+    - name: "Create Reverse Domains"
+      freeipa.ansible_freeipa.ipadnszone:
+        ipaadmin_password: '{{ ipaadmin_password }}'
+        name: '{{ item }}'
+        dynamic_update: true
+      with_items: '{{ rdns }}'
+
+    - name: "Create Forward Domains"
+      freeipa.ansible_freeipa.ipadnszone:
+        ipaadmin_password: '{{ ipaadmin_password }}'
+        name: '{{ item }}'
+        dynamic_update: true
+      with_items: '{{ fdns }}'

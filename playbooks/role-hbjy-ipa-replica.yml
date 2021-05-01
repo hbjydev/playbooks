@@ -1,0 +1,53 @@
+---
+# Creates an IPA replica
+# Define "host" as a hostgroup name or a single host
+- name: Configure IPA replica
+  hosts: "{{ host }}"
+  become: true
+  vars_files:
+  - vars/vaults/encpass.yml
+
+  # This is to try to avoid the handler issue in pre/post tasks
+  handlers:
+    - import_tasks: handlers/main.yml
+
+  pre_tasks:
+    - name: Check if ansible cannot be run here
+      stat:
+        path: /etc/no-ansible
+      register: no_ansible
+
+    - name: Verify if we can run ansible
+      assert:
+        that:
+          - "not no_ansible.stat.exists"
+        success_msg: "We are able to run on this node"
+        fail_msg: "/etc/no-ansible exists - skipping run on this node"
+
+    - name: Ensure 'dns=none' is set for Network Manager
+      ini_file:
+        path: /etc/NetworkManager/NetworkManager.conf
+        state: present
+        no_extra_spaces: true
+        section: main
+        option: dns
+        value: none
+        owner: root
+        group: root
+        mode: '0644'
+        backup: true
+      notify:
+        - reload_networkmanager
+
+  roles:
+    - role: freeipa.ansible_freeipa.ipareplica
+      state: present
+
+  post_tasks:
+    - name: Touching run file that ansible has ran here
+      file:
+        path: /var/log/ansible.run
+        state: touch
+        mode: '0644'
+        owner: root
+        group: root

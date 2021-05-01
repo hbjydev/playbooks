@@ -1,0 +1,16 @@
+---
+ipagroups:
+  - group: hbjy
+    description: HBJY User Accounts
+    user:
+      - hayden
+  - group: hbjyadm
+    description: HBJY Operational Admin Accounts
+    user:
+      - hayden
+  - group: services
+    description: HBJY Service Accounts
+    user:
+      - userman
+      - hostman
+      - kerbman
